@@ -1,0 +1,77 @@
+databaseChangeLog:
+  - changeSet:
+      id: 001-create-accounts-transactions
+      author: dpbank
+      changes:
+        - createTable:
+            tableName: tb_account
+            columns:
+              - column:
+                  name: account_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: pk_tb_account
+              - column:
+                  name: account_number
+                  type: VARCHAR(32)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: balance
+                  type: DECIMAL(19,4)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: version
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+        - addUniqueConstraint:
+            tableName: tb_account
+            columnNames: account_number
+            constraintName: uk_account_number
+        - createTable:
+            tableName: tb_transaction
+            columns:
+              - column:
+                  name: transaction_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: pk_tb_transaction
+              - column:
+                  name: account_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+              - column:
+                  name: amount
+                  type: DECIMAL(19,4)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: transaction_type
+                  type: VARCHAR(16)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: transaction_time
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseTableName: tb_transaction
+            baseColumnNames: account_id
+            referencedTableName: tb_account
+            referencedColumnNames: account_id
+            constraintName: fk_transaction_account
+            onDelete: CASCADE
+        - createIndex:
+            tableName: tb_transaction
+            indexName: idx_transaction_account
+            columns:
+              - column:
+                  name: account_id

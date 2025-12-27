@@ -1,4 +1,6 @@
 databaseChangeLog:
+  - include:
+      file: classpath:db/changelog/001-initial-schema.yaml
   - changeSet:
       id: 1
       author: dpbank
