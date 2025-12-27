@@ -1,0 +1,7 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1
+      author: dpbank
+      changes:
+        - tagDatabase:
+            tag: version-0.0.1
