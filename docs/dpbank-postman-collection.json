@@ -1,0 +1,123 @@
+{
+  "info": {
+    "name": "DP Bank API",
+    "description": "Collection to exercise the main DP Bank API operations.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "1.0.0"
+  },
+  "item": [
+    {
+      "name": "Process transactions (POST /accounts/:id/transactions)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "[\n  {\n    \"amount\": 500.00,\n    \"type\": \"CREDIT\"\n  },\n  {\n    \"amount\": 125.50,\n    \"type\": \"DEBIT\"\n  }\n]"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/accounts/{{accountId}}/transactions",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "accounts",
+            "{{accountId}}",
+            "transactions"
+          ]
+        },
+        "description": "Applies a list of debit/credit entries to the account.",
+      },
+      "response": [
+        {
+          "name": "Updated balance",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "[\n  {\n    \"amount\": 500.00,\n    \"type\": \"CREDIT\"\n  },\n  {\n    \"amount\": 125.50,\n    \"type\": \"DEBIT\"\n  }\n]"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/accounts/{{accountId}}/transactions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "accounts",
+                "{{accountId}}",
+                "transactions"
+              ]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"accountId\": \"2d2f3d02-3ec6-4e5b-8d2a-5a497c2a5db7\",\n  \"accountNumber\": \"1234567890\",\n  \"balance\": 874.50\n}"
+        }
+      ]
+    },
+    {
+      "name": "Retrieve balance (GET /accounts/:id/balance)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/accounts/{{accountId}}/balance",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "accounts",
+            "{{accountId}}",
+            "balance"
+          ]
+        },
+        "description": "Retrieves the current account balance.",
+      },
+      "response": [
+        {
+          "name": "Current balance",
+          "status": "OK",
+          "code": 200,
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"accountId\": \"2d2f3d02-3ec6-4e5b-8d2a-5a497c2a5db7\",\n  \"accountNumber\": \"1234567890\",\n  \"balance\": 998.25\n}"
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string",
+      "description": "DP Bank API base URL"
+    },
+    {
+      "key": "accountId",
+      "value": "2d2f3d02-3ec6-4e5b-8d2a-5a497c2a5db7",
+      "type": "string",
+      "description": "Account identifier"
+    }
+  ]
+}

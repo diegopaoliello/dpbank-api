@@ -22,6 +22,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * Persisted ledger entry that captures each debit/credit applied to an account
+ * along with the processing timestamp.
+ */
 @Getter
 @Setter
 @Builder
@@ -41,19 +45,22 @@ public class Transaction {
     private Account account;
 
     @Column(name = "amount", nullable = false, precision = 19, scale = 4)
-    private BigDecimal valor;
+    private BigDecimal amount;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "transaction_type", nullable = false, length = 16)
-    private TransactionType tipo;
+    private TransactionType type;
 
     @Column(name = "transaction_time", nullable = false)
-    private LocalDateTime dataHora;
+    private LocalDateTime processedAt;
 
+    /**
+     * Ensures a processing timestamp is set even when the service layer omits it.
+     */
     @PrePersist
     void prePersist() {
-        if (dataHora == null) {
-            dataHora = LocalDateTime.now();
+        if (processedAt == null) {
+            processedAt = LocalDateTime.now();
         }
     }
 }

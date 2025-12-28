@@ -15,6 +15,7 @@ import jakarta.validation.constraints.NotEmpty;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,57 +25,72 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * REST endpoints that fulfill requirements 1 to 5 of the assessment: execute debits/credits,
+ * allow batch launches, expose balance retrieval, and document the contract via Springdoc.
+ */
 @RestController
 @RequestMapping("/accounts")
 @RequiredArgsConstructor
 @Validated
-@Tag(name = "Accounts", description = "Operacoes de lancamento e consulta de saldo")
+@Slf4j
+@Tag(name = "Accounts", description = "Operations to process debits/credits and retrieve balances")
 public class AccountController {
 
     private final AccountService accountService;
 
+        /**
+         * Applies multiple debit/credit transactions to an account.
+         */
     @PostMapping("/{id}/transactions")
     @Operation(
-            summary = "Processa lancamentos de debito/credito",
-            description = "Aplica uma lista de lancamentos na conta informada garantindo consistencia via lock pessimista",
+            summary = "Process debit/credit transactions",
+            description = "Applies a list of transactions to the given account using pessimistic locking to ensure consistency",
             responses = {
-                    @ApiResponse(responseCode = "200", description = "Lancamentos aplicados com sucesso",
+                    @ApiResponse(responseCode = "200", description = "Transactions processed successfully",
                             content = @Content(schema = @Schema(implementation = AccountBalanceDTO.class))),
-                    @ApiResponse(responseCode = "404", description = "Conta nao encontrada", content = @Content),
-                    @ApiResponse(responseCode = "422", description = "Saldo insuficiente", content = @Content),
-                    @ApiResponse(responseCode = "400", description = "Payload invalido", content = @Content)
+                    @ApiResponse(responseCode = "404", description = "Account not found", content = @Content),
+                    @ApiResponse(responseCode = "422", description = "Insufficient balance", content = @Content),
+                    @ApiResponse(responseCode = "400", description = "Invalid payload", content = @Content)
             }
     )
-    public ResponseEntity<AccountBalanceDTO> processarLancamentos(
-            @Parameter(description = "Identificador da conta", required = true)
+    public ResponseEntity<AccountBalanceDTO> processTransactions(
+            @Parameter(description = "Account identifier", required = true)
             @PathVariable("id") UUID accountId,
             @RequestBody
             @Valid
-            @NotEmpty(message = "Lista de lancamentos obrigatoria")
-            List<@Valid TransactionRequestDTO> lancamentos) {
+            @NotEmpty(message = "{transactions.list.required}")
+            List<@Valid TransactionRequestDTO> transactions) {
 
-        Account account = accountService.processarLancamentos(accountId, lancamentos);
-        return ResponseEntity.ok(mapToBalance(account));
+                int totalTransactions = transactions != null ? transactions.size() : 0;
+                log.info("Processing {} transaction(s) for account {}", totalTransactions, accountId);
+                Account account = accountService.processTransactions(accountId, transactions);
+                log.info("Transactions processed for account {}. New balance: {}", accountId, account.getBalance());
+                return ResponseEntity.ok(mapToBalance(account));
     }
 
+        /**
+         * Retrieves the current consolidated balance of an account.
+         */
     @GetMapping("/{id}/balance")
     @Operation(
-            summary = "Consulta saldo da conta",
+            summary = "Fetch current account balance",
             responses = {
-                    @ApiResponse(responseCode = "200", description = "Saldo retornado",
+                    @ApiResponse(responseCode = "200", description = "Balance returned",
                             content = @Content(schema = @Schema(implementation = AccountBalanceDTO.class))),
-                    @ApiResponse(responseCode = "404", description = "Conta nao encontrada", content = @Content)
+                    @ApiResponse(responseCode = "404", description = "Account not found", content = @Content)
             }
     )
-    public ResponseEntity<AccountBalanceDTO> consultarSaldo(
-            @Parameter(description = "Identificador da conta", required = true)
+    public ResponseEntity<AccountBalanceDTO> getBalance(
+            @Parameter(description = "Account identifier", required = true)
             @PathVariable("id") UUID accountId) {
 
-        Account account = accountService.consultarConta(accountId);
-        return ResponseEntity.ok(mapToBalance(account));
+                log.info("Retrieving balance for account {}", accountId);
+                Account account = accountService.findAccount(accountId);
+                return ResponseEntity.ok(mapToBalance(account));
     }
 
     private AccountBalanceDTO mapToBalance(Account account) {
-        return new AccountBalanceDTO(account.getId(), account.getNumeroConta(), account.getSaldo());
+        return new AccountBalanceDTO(account.getId(), account.getAccountNumber(), account.getBalance());
     }
 }

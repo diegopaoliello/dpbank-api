@@ -9,7 +9,6 @@ import com.dpbank.api.repository.TransactionRepository;
 import com.dpbank.api.service.exception.InsufficientBalanceException;
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.UUID;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
@@ -33,41 +32,42 @@ class AccountServiceIntegrationTest extends AbstractIntegrationTest {
         accountRepository.deleteAll();
     }
 
-    @Test
-    @DisplayName("Deve aplicar sequencia de creditos e debitos garantindo saldo correto")
-    void deveProcessarCreditosEDebitos() {
-        Account account = criarConta("ACC-SVC-001", new BigDecimal("500.00"));
 
-        List<TransactionRequestDTO> lancamentos = List.of(
-                new TransactionRequestDTO(new BigDecimal("200.00"), TransactionType.CREDITO),
-                new TransactionRequestDTO(new BigDecimal("150.00"), TransactionType.DEBITO),
-                new TransactionRequestDTO(new BigDecimal("25.50"), TransactionType.CREDITO)
+    @Test
+    @DisplayName("Should apply credits and debits keeping the balance consistent")
+    void shouldProcessDebitsAndCredits() {
+        Account account = createAccount("ACC-SVC-001", new BigDecimal("500.00"));
+
+        List<TransactionRequestDTO> transactions = List.of(
+                new TransactionRequestDTO(new BigDecimal("200.00"), TransactionType.CREDIT),
+                new TransactionRequestDTO(new BigDecimal("150.00"), TransactionType.DEBIT),
+                new TransactionRequestDTO(new BigDecimal("25.50"), TransactionType.CREDIT)
         );
 
-        Account atualizado = accountService.processarLancamentos(account.getId(), lancamentos);
+        Account updated = accountService.processTransactions(account.getId(), transactions);
 
-        Assertions.assertThat(atualizado.getSaldo()).isEqualByComparingTo(new BigDecimal("575.50"));
+        Assertions.assertThat(updated.getBalance()).isEqualByComparingTo(new BigDecimal("575.50"));
         Assertions.assertThat(transactionRepository.count()).isEqualTo(3);
     }
 
     @Test
-    @DisplayName("Deve lançar excecao ao tentar debitar acima do saldo")
-    void deveLancarExcecaoAoDebitarSemSaldo() {
-        Account account = criarConta("ACC-SVC-002", new BigDecimal("50.00"));
+    @DisplayName("Should raise an exception when debiting more than the current balance")
+    void shouldFailWhenDebitingWithoutBalance() {
+        Account account = createAccount("ACC-SVC-002", new BigDecimal("50.00"));
 
-        List<TransactionRequestDTO> lancamentos = List.of(
-                new TransactionRequestDTO(new BigDecimal("100.00"), TransactionType.DEBITO)
+        List<TransactionRequestDTO> transactions = List.of(
+                new TransactionRequestDTO(new BigDecimal("100.00"), TransactionType.DEBIT)
         );
 
-        Assertions.assertThatThrownBy(() -> accountService.processarLancamentos(account.getId(), lancamentos))
+        Assertions.assertThatThrownBy(() -> accountService.processTransactions(account.getId(), transactions))
                 .isInstanceOf(InsufficientBalanceException.class)
-                .hasMessageContaining("Saldo insuficiente");
+                .hasMessage("error.insufficientBalance.detail");
     }
 
-    private Account criarConta(String numeroConta, BigDecimal saldo) {
+    private Account createAccount(String accountNumber, BigDecimal balance) {
         return accountRepository.save(Account.builder()
-                .numeroConta(numeroConta)
-                .saldo(saldo)
+                .accountNumber(accountNumber)
+                .balance(balance)
                 .build());
     }
 }

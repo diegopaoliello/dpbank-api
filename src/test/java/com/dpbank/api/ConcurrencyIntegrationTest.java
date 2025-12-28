@@ -41,10 +41,10 @@ class ConcurrencyIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
-    void deveManterSaldoConsistenteComDebitosConcorrentes() throws Exception {
+    void shouldKeepBalanceConsistentWithConcurrentDebits() throws Exception {
         Account account = accountRepository.save(Account.builder()
-                .numeroConta("ACC-CONC-001")
-                .saldo(INITIAL_BALANCE)
+                .accountNumber("ACC-CONC-001")
+                .balance(INITIAL_BALANCE)
                 .build());
 
         ExecutorService executor = Executors.newFixedThreadPool(THREADS);
@@ -55,11 +55,11 @@ class ConcurrencyIntegrationTest extends AbstractIntegrationTest {
             futures.add(executor.submit(() -> {
                 try {
                     startLatch.await();
-                    accountService.processarLancamentos(account.getId(),
-                            List.of(new TransactionRequestDTO(DEBIT_VALUE, TransactionType.DEBITO)));
+                    accountService.processTransactions(account.getId(),
+                            List.of(new TransactionRequestDTO(DEBIT_VALUE, TransactionType.DEBIT)));
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
-                    throw new IllegalStateException("Thread interrompida", e);
+                    throw new IllegalStateException("Thread interrupted", e);
                 }
             }));
         }
@@ -74,6 +74,6 @@ class ConcurrencyIntegrationTest extends AbstractIntegrationTest {
         executor.awaitTermination(5, TimeUnit.SECONDS);
 
         Account updated = accountRepository.findById(account.getId()).orElseThrow();
-        Assertions.assertThat(updated.getSaldo()).isEqualByComparingTo(BigDecimal.ZERO);
+        Assertions.assertThat(updated.getBalance()).isEqualByComparingTo(BigDecimal.ZERO);
     }
 }

@@ -1,0 +1,20 @@
+databaseChangeLog:
+  - changeSet:
+      id: 002-seed-default-account
+      author: dpbank
+      changes:
+        - insert:
+            tableName: tb_account
+            columns:
+              - column:
+                  name: account_id
+                  value: 2d2f3d02-3ec6-4e5b-8d2a-5a497c2a5db7
+              - column:
+                  name: account_number
+                  value: 1234567890
+              - column:
+                  name: balance
+                  valueNumeric: 1000.00
+              - column:
+                  name: version
+                  valueNumeric: 0

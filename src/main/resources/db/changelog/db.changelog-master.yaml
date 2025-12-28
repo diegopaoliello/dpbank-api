@@ -1,6 +1,8 @@
 databaseChangeLog:
   - include:
       file: classpath:db/changelog/001-initial-schema.yaml
+  - include:
+      file: classpath:db/changelog/002-seed-default-account.yaml
   - changeSet:
       id: 1
       author: dpbank

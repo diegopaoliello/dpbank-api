@@ -45,63 +45,64 @@ class AccountControllerIntegrationTest extends AbstractIntegrationTest {
         accountRepository.deleteAll();
     }
 
-    @Test
-    @DisplayName("POST /accounts/{id}/transactions deve aplicar creditos e debitos e retornar saldo atualizado")
-    void deveProcessarLancamentosViaController() throws Exception {
-        Account account = criarConta("ACC-CTRL-001", new BigDecimal("100.00"));
+        @Test
+        @DisplayName("POST /accounts/{id}/transactions should apply debits and credits returning the updated balance")
+        void shouldProcessTransactionsViaController() throws Exception {
+        Account account = createAccount("ACC-CTRL-001", new BigDecimal("100.00"));
 
-        List<TransactionRequestDTO> lancamentos = List.of(
-                new TransactionRequestDTO(new BigDecimal("50.00"), TransactionType.CREDITO),
-                new TransactionRequestDTO(new BigDecimal("25.00"), TransactionType.DEBITO)
+        List<TransactionRequestDTO> transactions = List.of(
+            new TransactionRequestDTO(new BigDecimal("50.00"), TransactionType.CREDIT),
+            new TransactionRequestDTO(new BigDecimal("25.00"), TransactionType.DEBIT)
         );
 
         mockMvc.perform(post("/accounts/{id}/transactions", account.getId())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(lancamentos)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.accountId").value(account.getId().toString()))
-                .andExpect(jsonPath("$.saldo").value(125.00));
-    }
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(transactions)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.accountId").value(account.getId().toString()))
+            .andExpect(jsonPath("$.accountNumber").value("ACC-CTRL-001"))
+            .andExpect(jsonPath("$.balance").value(125.00));
+        }
 
-    @Test
-    @DisplayName("POST /accounts/{id}/transactions deve retornar 422 quando saldo for insuficiente")
-    void deveRetornar422QuandoSaldoInsuficiente() throws Exception {
-        Account account = criarConta("ACC-CTRL-002", new BigDecimal("10.00"));
+        @Test
+        @DisplayName("POST /accounts/{id}/transactions should return 422 when balance is insufficient")
+        void shouldReturn422WhenBalanceIsInsufficient() throws Exception {
+        Account account = createAccount("ACC-CTRL-002", new BigDecimal("10.00"));
 
-        List<TransactionRequestDTO> lancamentos = List.of(
-                new TransactionRequestDTO(new BigDecimal("20.00"), TransactionType.DEBITO)
+        List<TransactionRequestDTO> transactions = List.of(
+            new TransactionRequestDTO(new BigDecimal("20.00"), TransactionType.DEBIT)
         );
 
         mockMvc.perform(post("/accounts/{id}/transactions", account.getId())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(lancamentos)))
-                .andExpect(status().isUnprocessableEntity())
-                .andExpect(jsonPath("$.title").value("Saldo insuficiente"));
-    }
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(transactions)))
+            .andExpect(status().isUnprocessableEntity())
+            .andExpect(jsonPath("$.title").value("Insufficient balance"));
+        }
 
-    @Test
-    @DisplayName("GET /accounts/{id}/balance deve retornar saldo atual")
-    void deveConsultarSaldo() throws Exception {
-        Account account = criarConta("ACC-CTRL-003", new BigDecimal("321.45"));
+        @Test
+        @DisplayName("GET /accounts/{id}/balance should return the current balance")
+        void shouldFetchBalance() throws Exception {
+        Account account = createAccount("ACC-CTRL-003", new BigDecimal("321.45"));
 
         mockMvc.perform(get("/accounts/{id}/balance", account.getId()))
-                .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.saldo").value(321.45));
-    }
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andExpect(jsonPath("$.balance").value(321.45));
+        }
 
-    @Test
-    @DisplayName("GET /accounts/{id}/balance deve retornar 404 para conta inexistente")
-    void deveRetornar404ParaContaInexistente() throws Exception {
+        @Test
+        @DisplayName("GET /accounts/{id}/balance should return 404 for unknown account")
+        void shouldReturn404ForUnknownAccount() throws Exception {
         mockMvc.perform(get("/accounts/{id}/balance", UUID.randomUUID()))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.title").value("Recurso nao encontrado"));
-    }
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.title").value("Resource not found"));
+        }
 
-    private Account criarConta(String numeroConta, BigDecimal saldo) {
+        private Account createAccount(String accountNumber, BigDecimal balance) {
         return accountRepository.save(Account.builder()
-                .numeroConta(numeroConta)
-                .saldo(saldo)
-                .build());
-    }
+            .accountNumber(accountNumber)
+            .balance(balance)
+            .build());
+        }
 }
