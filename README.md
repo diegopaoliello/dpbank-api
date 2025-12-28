@@ -67,6 +67,8 @@ curl -s http://localhost:8080/actuator/health | jq
 | `account_number` | `1234567890` |
 | Saldo inicial | `1000.00` |
 
+> 💡 Use o `account_id` acima (`2d2f3d02-3ec6-4e5b-8d2a-5a497c2a5db7`) para testar os endpoints caso não crie novas contas.
+
 ## Documentação da API
 ### Springdoc / OpenAPI
 - UI interativa (Swagger): `http://localhost:8080/docs`
