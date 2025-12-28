@@ -31,7 +31,7 @@
             "transactions"
           ]
         },
-        "description": "Applies a list of debit/credit entries to the account.",
+        "description": "Applies a list of debit/credit entries to the account."
       },
       "response": [
         {
@@ -88,7 +88,7 @@
             "balance"
           ]
         },
-        "description": "Retrieves the current account balance.",
+        "description": "Retrieves the current account balance."
       },
       "response": [
         {

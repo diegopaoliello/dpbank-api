@@ -8,17 +8,17 @@ API REST para processamento de débitos, créditos e consulta de saldos de conta
 - [Pré-requisitos](#pré-requisitos)
 - [Guia rápido](#guia-rápido)
 - [Migrations e dados iniciais](#migrations-e-dados-iniciais)
+- [Documentação da API](#documentação-da-api)
 - [Contratos da API](#contratos-da-api)
 - [Internacionalização](#internacionalização)
 - [Ferramentas auxiliares](#ferramentas-auxiliares)
 - [Testes e qualidade](#testes-e-qualidade)
-- [Comandos úteis](#comandos-úteis)
 
 ## Contexto e funcionalidades
 - Processamento de lançamentos em lote (débito/crédito) sobre uma conta correntista única, com bloqueio pessimista para evitar condições de corrida.
 - Consulta do saldo consolidado após cada batch de transações.
 - Comunicação com mensagens padronizadas e traduzidas via `Accept-Language` (`pt`, `en`, `es`).
-- Observabilidade exposta por Actuator e documentação viva através do Springdoc.
+- Observabilidade exposta por Actuator e documentação compartilhada via coleção Postman.
 
 ## Stack técnica
 | Categoria | Ferramentas |
@@ -26,7 +26,7 @@ API REST para processamento de débitos, créditos e consulta de saldos de conta
 | Linguagem / Runtime | **Java 21**, Maven 3.9+
 | Framework principal | **Spring Boot 3.5.9** (Web, Validation, Data JPA, Actuator)
 | Persistência | **JPA/Hibernate** + **Liquibase** (versionamento do schema) + **H2** em memória para execução local; **Testcontainers + PostgreSQL** para integrações
-| Documentação | **Springdoc OpenAPI** (`/docs` + `/docs/api`), coleção Postman versionada
+| Documentação | **Coleção Postman** (`docs/dpbank-postman-collection.json`) importável em qualquer ambiente
 | Internacionalização | **Spring i18n** com bundles `messages.properties` (pt, en, es)
 | Testes | **JUnit 5**, Spring Boot Test, **Testcontainers** para bancos descartáveis
 | Observabilidade | **Spring Boot Actuator**, logs estruturados via SLF4J/Logback
@@ -67,6 +67,15 @@ curl -s http://localhost:8080/actuator/health | jq
 | `account_number` | `1234567890` |
 | Saldo inicial | `1000.00` |
 
+## Documentação da API
+### Springdoc / OpenAPI
+- UI interativa (Swagger): `http://localhost:8080/docs`
+- Contrato JSON/YAML: `http://localhost:8080/docs/api`
+- Disponível enquanto a API estiver em execução
+
+### Coleção Postman
+- Arquivo versionado: [`docs/dpbank-postman-collection.json`](docs/dpbank-postman-collection.json) já inclui variáveis `baseUrl` e `accountId`.
+
 ## Contratos da API
 ### Endpoints principais
 | Método | Caminho | Descrição |
@@ -106,15 +115,6 @@ curl -s -H "Accept-Language: es" \
 Resposta (`404`): `{"title":"Cuenta no encontrada", ...}`.
 
 ## Ferramentas auxiliares
-### Springdoc / OpenAPI
-- UI interativa: `http://localhost:8080/docs`
-- Documento OpenAPI JSON/YAML: `http://localhost:8080/docs/api`
-- Importar no Postman:
-  1. Abra o Postman → *Import* → *Link*.
-  2. Cole `http://localhost:8080/docs/api` e confirme.
-  3. Postman cria automaticamente a collection com os endpoints acima.
-- Para uso offline, importe o arquivo versionado em [`docs/dpbank-postman-collection.json`](docs/dpbank-postman-collection.json).
-
 ### H2 Console (somente local)
 - URL: `http://localhost:8080/h2-console`
 - JDBC URL: `jdbc:h2:mem:dpbankdb`
@@ -134,7 +134,3 @@ Resposta (`404`): `{"title":"Cuenta no encontrada", ...}`.
 | `./mvnw spring-boot:run` | Alternativa durante o desenvolvimento (hot reload via DevTools).
 
 - ⚠️ **Docker obrigatório para testes**: sem o engine ativo, o Testcontainers não consegue subir o PostgreSQL descartável e `./mvnw clean install`/`verify` falharão. Se realmente precisar rodar sem Docker, utilize `-DskipTests` (ou configure um profile alternativo), ciente de que os testes de integração ficarão pendentes.
-
-- Os testes de concorrência usam `@Transactional` + bloqueio pessimista (`FOR UPDATE`) para garantir consistência.
-- Logs principais ficam em `target/spring.log` quando executado via Maven ou direto no console ao usar o JAR.
-
