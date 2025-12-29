@@ -1,0 +1,163 @@
+{
+    "openapi": "3.0.1",
+    "info": {
+        "title": "DP Bank API",
+        "version": "v0"
+    },
+    "servers": [
+        {
+            "url": "http://localhost:8080",
+            "description": "Generated server url"
+        }
+    ],
+    "tags": [
+        {
+            "name": "Accounts",
+            "description": "Operations to process debits/credits and retrieve balances"
+        }
+    ],
+    "paths": {
+        "/accounts/{id}/transactions": {
+            "post": {
+                "tags": [
+                    "Accounts"
+                ],
+                "summary": "Process debit/credit transactions",
+                "description": "Applies a list of transactions to the given account using pessimistic locking to ensure consistency",
+                "operationId": "processTransactions",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Account identifier",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/components/schemas/TransactionRequest"
+                                }
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Transactions processed successfully",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AccountBalance"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Account not found"
+                    },
+                    "422": {
+                        "description": "Insufficient balance"
+                    },
+                    "400": {
+                        "description": "Invalid payload"
+                    }
+                }
+            }
+        },
+        "/accounts/{id}/balance": {
+            "get": {
+                "tags": [
+                    "Accounts"
+                ],
+                "summary": "Fetch current account balance",
+                "operationId": "getBalance",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Account identifier",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Balance returned",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AccountBalance"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Account not found"
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "AccountBalance": {
+                "type": "object",
+                "properties": {
+                    "accountId": {
+                        "type": "string",
+                        "description": "Unique account identifier",
+                        "format": "uuid",
+                        "example": "2d2f3d02-3ec6-4e5b-8d2a-5a497c2a5db7"
+                    },
+                    "accountNumber": {
+                        "type": "string",
+                        "description": "Human-readable account number",
+                        "example": "1234567890"
+                    },
+                    "balance": {
+                        "type": "number",
+                        "description": "Current consolidated balance",
+                        "example": 998.25
+                    }
+                },
+                "description": "Representation of the current account balance"
+            },
+            "TransactionRequest": {
+                "required": [
+                    "amount",
+                    "type"
+                ],
+                "type": "object",
+                "properties": {
+                    "amount": {
+                        "type": "number",
+                        "description": "Monetary amount to be applied",
+                        "example": 150.75
+                    },
+                    "type": {
+                        "type": "string",
+                        "description": "Transaction type. Use CREDIT to add funds or DEBIT to remove them",
+                        "example": "DEBIT",
+                        "enum": [
+                            "DEBIT",
+                            "CREDIT"
+                        ]
+                    }
+                },
+                "description": "Single debit/credit entry applied to an account"
+            }
+        }
+    }
+}

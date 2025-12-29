@@ -72,7 +72,7 @@ curl -s http://localhost:8080/actuator/health | jq
 ## Documentação da API
 ### Springdoc / OpenAPI
 - UI interativa (Swagger): `http://localhost:8080/docs`
-- Contrato JSON/YAML: `http://localhost:8080/docs/api`
+- Contrato JSON/YAML: `http://localhost:8080/docs/api` (o arquivo [docs/dpbankapi.json](docs/dpbankapi.json) é o retorno desta URL do Springdoc e está versionado no projeto)
 - Disponível enquanto a API estiver em execução
 
 ### Coleção Postman
@@ -86,6 +86,7 @@ curl -s http://localhost:8080/actuator/health | jq
 | `GET` | `/accounts/{id}/balance` | Consulta o saldo consolidado da conta.
 
 ### Payload de exemplo
+`POST /accounts/{id}/transactions` (payload)
 ```json
 [
   {
@@ -105,6 +106,25 @@ curl -s http://localhost:8080/actuator/health | jq
   - Lista não pode ser vazia (`transactions.list.required`).
   - Débitos são recusados se o saldo não for suficiente (`422 Unprocessable Entity`).
   - Erros de payload retornam `400 Bad Request` com `ProblemDetail` padronizado.
+
+### Respostas de exemplo
+`POST /accounts/{id}/transactions` (200)
+```json
+{
+  "accountId": "2d2f3d02-3ec6-4e5b-8d2a-5a497c2a5db7",
+  "accountNumber": "1234567890",
+  "balance": 95.5000
+}
+```
+
+`GET /accounts/{id}/balance` (200)
+```json
+{
+  "accountId": "2d2f3d02-3ec6-4e5b-8d2a-5a497c2a5db7",
+  "accountNumber": "1234567890",
+  "balance": 95.5000
+}
+```
 
 ## Internacionalização
 - Definições em `src/main/resources/i18n/messages*.properties`.
@@ -127,12 +147,5 @@ Resposta (`404`): `{"title":"Cuenta no encontrada", ...}`.
 ### Actuator
 - Endpoints expostos: `GET /actuator`, `GET /actuator/health`, `GET /actuator/info` (outros seguem configuração default do Spring Boot 3).
 - Útil para automações de monitoração ou smoke tests em pipelines.
-
-## Testes e qualidade
-| Comando | Descrição |
-| --- | --- |
-| `./mvnw test` | Executa testes unitários + integrações leves.
-| `./mvnw verify` | Executa toda a suíte com Testcontainers e validação das migrations.
-| `./mvnw spring-boot:run` | Alternativa durante o desenvolvimento (hot reload via DevTools).
 
 - ⚠️ **Docker obrigatório para testes**: sem o engine ativo, o Testcontainers não consegue subir o PostgreSQL descartável e `./mvnw clean install`/`verify` falharão. Se realmente precisar rodar sem Docker, utilize `-DskipTests` (ou configure um profile alternativo), ciente de que os testes de integração ficarão pendentes.
